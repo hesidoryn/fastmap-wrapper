@@ -29,15 +29,28 @@ func main() {
 }
 
 func foo(w http.ResponseWriter, r *http.Request) {
+	qp := r.URL.Query()
+	bbox := qp.Get("bbox")
+	if len(bbox) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("400 - bbox is requierd!"))
+	}
+
+	cs := strings.Split(bbox, ",")
+	if len(cs) < 4 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("400 - minlot, minlat, maxlot, maxlot!"))
+	}
+
+	fastmapQuery := fmt.Sprintf(fastmapQueryf, cs[0], cs[1], cs[2], cs[3])
 	rows, err := db.Query(fastmapQuery)
 	checkErr(err)
 
-	nodeCount := 48343
-	xmlNodes := make([]string, nodeCount)
-	i := 0
+	xmlNodes := make([]string, 0)
 	for rows.Next() {
-		rows.Scan(&xmlNodes[i])
-		i++
+		node := ""
+		rows.Scan(&node)
+		xmlNodes = append(xmlNodes, node)
 	}
 
 	xml := strings.Join(xmlNodes, "")
