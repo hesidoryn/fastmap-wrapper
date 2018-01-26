@@ -39,7 +39,7 @@ func foo(w http.ResponseWriter, r *http.Request) {
 	cs := strings.Split(bbox, ",")
 	if len(cs) < 4 {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("400 - minlot, minlat, maxlot, maxlot!"))
+		w.Write([]byte("400 - minlon, minlat, maxlon, maxlat!"))
 	}
 
 	fastmapQuery := fmt.Sprintf(fastmapQueryf, cs[0], cs[1], cs[2], cs[3])
