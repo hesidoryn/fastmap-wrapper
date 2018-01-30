@@ -12,23 +12,22 @@ import (
 var db *sqlx.DB
 
 const (
-	DB_USER     = "sidoringi"
-	DB_PASSWORD = "pass"
-	DB_NAME     = "gis"
+	dbUser = "heorhi"
+	dbName = "openstreetmap"
 )
 
 func init() {
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
-		DB_USER, DB_PASSWORD, DB_NAME)
+	dbinfo := fmt.Sprintf("user=%s dbname=%s sslmode=disable",
+		dbUser, dbName)
 	db, _ = sqlx.Open("postgres", dbinfo)
 }
 
 func main() {
-	http.HandleFunc("/api/0.6/map", foo)
+	http.HandleFunc("/api/0.6/map", fastmap)
 	http.ListenAndServe(":3001", nil)
 }
 
-func foo(w http.ResponseWriter, r *http.Request) {
+func fastmap(w http.ResponseWriter, r *http.Request) {
 	qp := r.URL.Query()
 	bbox := qp.Get("bbox")
 	if len(bbox) == 0 {
