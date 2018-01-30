@@ -3,8 +3,8 @@ package main
 const fastmapQueryf = `
 with params as (
     select
-        %s :: float  as minlon,
-        %s :: float  as minlat,
+        %s :: float as minlon,
+        %s :: float as minlat,
         %s :: float as maxlon,
         %s :: float as maxlat
 ), direct_nodes as (
@@ -53,7 +53,7 @@ select line
 from (
     -- XML header
     select
-        '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="FastMAP" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">' :: text as line
+        '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="OpenStreetMap server" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">' :: text as line
     union all
     -- bounds header
     select xmlelement(name bounds, xmlattributes (minlat, minlon, maxlat, maxlon)) :: text as line
