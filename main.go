@@ -1,15 +1,15 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
-var db *sqlx.DB
+var db *sql.DB
 
 const (
 	dbUser = "heorhi"
@@ -19,7 +19,7 @@ const (
 func init() {
 	dbinfo := fmt.Sprintf("user=%s dbname=%s sslmode=disable",
 		dbUser, dbName)
-	db, _ = sqlx.Open("postgres", dbinfo)
+	db, _ = sql.Open("postgres", dbinfo)
 }
 
 func main() {
@@ -38,19 +38,12 @@ func fastmap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fastmapQuery := fmt.Sprintf(fastmapQueryf, cs[0], cs[1], cs[2], cs[3])
-	rows, err := db.Query(fastmapQuery)
+	xml := make([]byte, 0)
+	err := db.QueryRow(fastmapQuery).Scan(&xml)
 	checkErr(err)
 
-	xmlNodes := make([]string, 0)
-	for rows.Next() {
-		node := ""
-		rows.Scan(&node)
-		xmlNodes = append(xmlNodes, node)
-	}
-
-	xml := strings.Join(xmlNodes, "")
 	w.Header().Set("Content-Type", "application/xml")
-	w.Write([]byte(xml))
+	w.Write(xml)
 }
 
 func checkErr(err error) {

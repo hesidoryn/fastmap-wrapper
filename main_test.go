@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func Test_fastmap(t *testing.T) {
@@ -27,13 +28,17 @@ func Test_fastmap(t *testing.T) {
 	t.Run("bbox - table test", func(t *testing.T) {
 		bboxes := []string{"27.616,53.853,27.630,53.870", "27.616,53.853,27.617,53.854"}
 		for i := range bboxes {
-			ts := httptest.NewServer(http.HandlerFunc(fastmap))
+			// ts := httptest.NewServer(http.HandlerFunc(fastmap))
 			bbox := "?bbox=" + bboxes[i]
-			ts.URL += bbox
-			res1, err := http.Get(ts.URL)
+			// ts.URL += bbox
+			fastmapURL := "http://localhost:3001/api/0.6/map" + bbox
+			startReq := time.Now()
+			// res1, err := http.Get(ts.URL)
+			res1, err := http.Get(fastmapURL)
 			if err != nil {
 				log.Fatal(err)
 			}
+			t.Log(bbox, "fastmap response time: ", time.Since(startReq))
 			fastmapResponse, err := ioutil.ReadAll(res1.Body)
 			res1.Body.Close()
 			if err != nil {
@@ -44,10 +49,12 @@ func Test_fastmap(t *testing.T) {
 			fm.sort()
 
 			portURL := "http://localhost:3000/api/0.6/map" + bbox
+			startReq = time.Now()
 			res2, err := http.Get(portURL)
 			if err != nil {
 				log.Fatal(err)
 			}
+			t.Log(bbox, "port response time: ", time.Since(startReq))
 			portResponse, err := ioutil.ReadAll(res2.Body)
 			res2.Body.Close()
 			if err != nil {
@@ -59,11 +66,33 @@ func Test_fastmap(t *testing.T) {
 
 			if !reflect.DeepEqual(fm, port) {
 				ioutil.WriteFile("fastmap-"+bboxes[i]+".xml", fastmapResponse, 0644)
-				ioutil.WriteFile("port-"+bboxes[i]+".xml", fastmapResponse, 0644)
+				ioutil.WriteFile("port-"+bboxes[i]+".xml", portResponse, 0644)
 				t.Errorf("bbox=%v, expected: true, got: false", bboxes[i])
 			}
 
-			ts.Close()
+			cgimapURL := "http://localhost:31337/api/0.6/map" + bbox
+			startReq = time.Now()
+			res3, err := http.Get(cgimapURL)
+			if err != nil {
+				log.Fatal(err)
+			}
+			t.Log(bbox, "cgimap response time: ", time.Since(startReq))
+			cgimapResponse, err := ioutil.ReadAll(res3.Body)
+			res3.Body.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+			cgimap := &osm{}
+			xml.Unmarshal(cgimapResponse, cgimap)
+			cgimap.sort()
+
+			if !reflect.DeepEqual(fm, cgimap) {
+				ioutil.WriteFile("fastmap-"+bboxes[i]+".xml", fastmapResponse, 0644)
+				ioutil.WriteFile("cgimap-"+bboxes[i]+".xml", cgimapResponse, 0644)
+				t.Errorf("bbox=%v, expected: true, got: false", bboxes[i])
+			}
+
+			// ts.Close()
 		}
 	})
 }

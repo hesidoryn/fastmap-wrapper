@@ -49,43 +49,45 @@ with params as (
     from relations_from_ways_and_nodes r2
         join current_relation_members rm on (r2.id = rm.member_id and rm.member_type = 'Relation')
 )
-select line
-from (
-    -- XML header
-    select
-        '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="OpenStreetMap server" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">' :: text as line
+
+select array_to_string( array_agg(osm),'' ) FROM (
+    select line
+    from (
+        -- XML header
+        select
+            '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="OpenStreetMap server" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">' :: text as line
+        union all
+        -- bounds header
+        select xmlelement(name bounds, xmlattributes (minlat, minlon, maxlat, maxlon)) :: text as line
+    from params p
     union all
-    -- bounds header
-    select xmlelement(name bounds, xmlattributes (minlat, minlon, maxlat, maxlon)) :: text as line
-from params p
-union all
--- nodes
-select line :: text
-from (
-         select n.node :: xml as line
-         from all_request_nodes n
-         order by (n.node).id
-     ) nodes
-union all
--- ways
-select line :: text
-from (
-         select get_way_by_id(w.id) :: xml as line
-         from all_request_ways w
-         order by w.id
-     ) ways
-union all
--- relations
-select line :: text
-from
-    (
-        select get_relation_by_id(r.id) :: xml as line
-        from all_request_relations r
-        order by r.id
-    ) relations
-union all
--- XML footer
-select '</osm>'
-) repsonse;
-commit;
+    -- nodes
+    select line :: text
+    from (
+             select n.node :: xml as line
+             from all_request_nodes n
+             order by (n.node).id
+         ) nodes
+    union all
+    -- ways
+    select line :: text
+    from (
+             select get_way_by_id(w.id) :: xml as line
+             from all_request_ways w
+             order by w.id
+         ) ways
+    union all
+    -- relations
+    select line :: text
+    from
+        (
+            select get_relation_by_id(r.id) :: xml as line
+            from all_request_relations r
+            order by r.id
+        ) relations
+    union all
+    -- XML footer
+    select '</osm>'
+    ) response
+) as osm
 `
