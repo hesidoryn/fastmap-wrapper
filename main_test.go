@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -28,6 +29,11 @@ func Test_fastmap(t *testing.T) {
 	t.Run("bbox - table test", func(t *testing.T) {
 		bboxes := []string{"27.616,53.853,27.630,53.870", "27.616,53.853,27.617,53.854"}
 		for i := range bboxes {
+			path := "xml_files/" + bboxes[i]
+			if _, err := os.Stat(path); os.IsNotExist(err) {
+				os.MkdirAll(path, os.ModePerm)
+			}
+
 			// ts := httptest.NewServer(http.HandlerFunc(fastmap))
 			bbox := "?bbox=" + bboxes[i]
 			// ts.URL += bbox
@@ -44,6 +50,7 @@ func Test_fastmap(t *testing.T) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			ioutil.WriteFile(path+"/fastmap.xml", fastmapResponse, 0644)
 			fm := &osm{}
 			xml.Unmarshal(fastmapResponse, fm)
 			fm.sort()
@@ -60,13 +67,12 @@ func Test_fastmap(t *testing.T) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			ioutil.WriteFile(path+"/port.xml", portResponse, 0644)
 			port := &osm{}
 			xml.Unmarshal(portResponse, port)
 			port.sort()
 
 			if !reflect.DeepEqual(fm, port) {
-				ioutil.WriteFile("fastmap-"+bboxes[i]+".xml", fastmapResponse, 0644)
-				ioutil.WriteFile("port-"+bboxes[i]+".xml", portResponse, 0644)
 				t.Errorf("bbox=%v, expected: true, got: false", bboxes[i])
 			}
 
@@ -82,13 +88,12 @@ func Test_fastmap(t *testing.T) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			ioutil.WriteFile(path+"/cgimap.xml", cgimapResponse, 0644)
 			cgimap := &osm{}
 			xml.Unmarshal(cgimapResponse, cgimap)
 			cgimap.sort()
 
 			if !reflect.DeepEqual(fm, cgimap) {
-				ioutil.WriteFile("fastmap-"+bboxes[i]+".xml", fastmapResponse, 0644)
-				ioutil.WriteFile("cgimap-"+bboxes[i]+".xml", cgimapResponse, 0644)
 				t.Errorf("bbox=%v, expected: true, got: false", bboxes[i])
 			}
 
