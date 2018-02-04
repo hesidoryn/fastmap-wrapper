@@ -38,13 +38,15 @@ func fastmap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fastmapQuery := fmt.Sprintf(fastmapQueryf, cs[0], cs[1], cs[2], cs[3])
-	xml := make([]byte, 0)
-	err := db.QueryRow(fastmapQuery).Scan(&xml)
+	rows, err := db.Query(fastmapQuery)
 	checkErr(err)
-
+	defer rows.Close()
 	w.Header().Set("Content-Type", "application/xml")
-	w.Write(xml)
-
+	for rows.Next() {
+		node := make([]byte, 0)
+		rows.Scan(&node)
+		w.Write(node)
+	}
 }
 
 func checkErr(err error) {

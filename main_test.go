@@ -27,7 +27,11 @@ func Test_fastmap(t *testing.T) {
 	})
 
 	t.Run("bbox - table test", func(t *testing.T) {
-		bboxes := []string{"27.616,53.853,27.630,53.870", "27.616,53.853,27.617,53.854"}
+		bboxes := []string{
+			"27.616,53.853,27.630,53.870",
+			"27.616,53.853,27.617,53.854",
+			"27.61649608612061,53.85379229563698,27.671985626220707,53.886459293813054",
+		}
 		for i := range bboxes {
 			path := "xml_files/" + bboxes[i]
 			if _, err := os.Stat(path); os.IsNotExist(err) {
