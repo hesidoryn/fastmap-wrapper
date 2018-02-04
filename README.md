@@ -15,6 +15,6 @@ go run main.go fastmap.go osm.go
     
     bbox=27.616,53.853,27.617,53.854:
         fastmap response time: 362.441185ms
-   	    port response time: 49.829756ms
-   	    cgimap response time:  38.804292ms
+        port response time: 49.829756ms
+        cgimap response time:  38.804292ms
 ```
