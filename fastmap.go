@@ -3,10 +3,10 @@ package main
 const fastmapQueryf = `
 with params as (
     select
-        %s :: float as minlon,
-        %s :: float as minlat,
-        %s :: float as maxlon,
-        %s :: float as maxlat
+        %v :: float as minlon,
+        %v :: float as minlat,
+        %v :: float as maxlon,
+        %v :: float as maxlat
 ), direct_nodes as (
     select get_nodes_by_box(minlon, minlat, maxlon, maxlat) node
     from params

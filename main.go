@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	_ "github.com/lib/pq"
@@ -14,6 +15,14 @@ var db *sql.DB
 const (
 	dbUser = "heorhi"
 	dbName = "openstreetmap"
+
+	minLatitude  = -90.0
+	maxLatitude  = 90.0
+	minLongitude = -180.0
+	maxLongitude = 180.0
+
+	errorBboxIsRequired         = "The parameter bbox is required, and must be of the form min_lon,min_lat,max_lon,max_lat."
+	errorWrongLongitudeLatitude = "The latitudes must be between -90 and 90, longitudes between -180 and 180 and the minima must be less than the maxima."
 )
 
 func init() {
@@ -30,14 +39,60 @@ func main() {
 func fastmap(w http.ResponseWriter, r *http.Request) {
 	qp := r.URL.Query()
 	bbox := qp.Get("bbox")
+	if len(bbox) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errorBboxIsRequired))
+		return
+	}
 	cs := strings.Split(bbox, ",")
 	if len(cs) != 4 {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("400 - minlon, minlat, maxlon, maxlat!"))
+		w.Write([]byte(errorBboxIsRequired))
 		return
 	}
 
-	fastmapQuery := fmt.Sprintf(fastmapQueryf, cs[0], cs[1], cs[2], cs[3])
+	minlonString, minlatString, maxlonString, maxlatString := cs[0], cs[1], cs[2], cs[3]
+	minlon, err := strconv.ParseFloat(minlonString, 64)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errorBboxIsRequired))
+		return
+	}
+	minlat, err := strconv.ParseFloat(minlatString, 64)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errorBboxIsRequired))
+		return
+	}
+	maxlon, err := strconv.ParseFloat(maxlonString, 64)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errorBboxIsRequired))
+		return
+	}
+	maxlat, err := strconv.ParseFloat(maxlatString, 64)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errorBboxIsRequired))
+		return
+	}
+
+	if minlon > maxlon || minlat > maxlat ||
+		minlon < minLongitude || minlon > maxLongitude ||
+		maxlon < minLongitude || maxlon > maxLongitude ||
+		minlat < minLatitude || minlat > minLatitude ||
+		maxlat < minLatitude || maxlat > minLatitude {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errorWrongLongitudeLatitude))
+		return
+	}
+
+	fastmapQuery := fmt.Sprintf(fastmapQueryf,
+		minlon,
+		minlat,
+		maxlon,
+		maxlat,
+	)
 	rows, err := db.Query(fastmapQuery)
 	checkErr(err)
 	defer rows.Close()

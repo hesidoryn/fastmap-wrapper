@@ -12,11 +12,11 @@ import (
 	"time"
 )
 
-func Test_fastmap(t *testing.T) {
-	t.Run("Bad request", func(t *testing.T) {
+func Test_fastmapBadRequests(t *testing.T) {
+	t.Run("empty bbox", func(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(fastmap))
 		defer ts.Close()
-		res, err := http.Get(ts.URL + "?bbox=13123234142141241234")
+		res, err := http.Get(ts.URL)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -26,6 +26,86 @@ func Test_fastmap(t *testing.T) {
 		}
 	})
 
+	t.Run("bbox=0,0,0", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(fastmap))
+		defer ts.Close()
+		res, err := http.Get(ts.URL + "?bbox=0,0,0")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer res.Body.Close()
+		if res.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected: %v, got: %v", http.StatusBadRequest, res.StatusCode)
+		}
+	})
+
+	t.Run("bbox=0.1,0.1,-0.1,-0.1", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(fastmap))
+		defer ts.Close()
+		res, err := http.Get(ts.URL + "?bbox=0.1,0.1,-0.1,-0.1")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer res.Body.Close()
+		if res.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected: %v, got: %v", http.StatusBadRequest, res.StatusCode)
+		}
+	})
+
+	t.Run("bbox=179.9,0,180.1,0.1", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(fastmap))
+		defer ts.Close()
+		res, err := http.Get(ts.URL + "?bbox=179.9,0,180.1,0.1")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer res.Body.Close()
+		if res.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected: %v, got: %v", http.StatusBadRequest, res.StatusCode)
+		}
+	})
+
+	t.Run("bbox=-180.1,0,-179.9,0.1", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(fastmap))
+		defer ts.Close()
+		res, err := http.Get(ts.URL + "?bbox=-180.1,0,-179.9,0.1")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer res.Body.Close()
+		if res.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected: %v, got: %v", http.StatusBadRequest, res.StatusCode)
+		}
+	})
+
+	t.Run("bbox=0,89.9,0.1,90.1", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(fastmap))
+		defer ts.Close()
+		res, err := http.Get(ts.URL + "?bbox=0,89.9,0.1,90.1")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer res.Body.Close()
+		if res.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected: %v, got: %v", http.StatusBadRequest, res.StatusCode)
+		}
+	})
+
+	t.Run("bbox=0,-90.1,0.1,-89.9", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(fastmap))
+		defer ts.Close()
+		res, err := http.Get(ts.URL + "?bbox=0,-90.1,0.1,-89.9")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer res.Body.Close()
+		if res.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected: %v, got: %v", http.StatusBadRequest, res.StatusCode)
+		}
+	})
+}
+
+func Test_fastmap(t *testing.T) {
 	t.Run("bbox - table test", func(t *testing.T) {
 		bboxes := []string{
 			"27.616,53.853,27.630,53.870",
